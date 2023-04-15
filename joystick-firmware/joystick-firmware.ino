@@ -10,6 +10,8 @@ int buttons[NUM_BUTTONS] = {
    2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, A4, A5
 };
 
+float joystickAvg[4];
+
 void setup() {
   Serial.begin(115200);
 
@@ -23,10 +25,14 @@ void setup() {
   }
 }
 
+
+
 void loop() {  
   uint16_t buttonState = readButtonState();
   uint16_t joystickState[4];
   readJoystickState(joystickState);
+
+  smooth(joystickState, joystickAvg, 10);
 
   uint16_t startShort = 65535; // 16 1s
   writeShort(startShort);
@@ -35,7 +41,7 @@ void loop() {
     writeShort(joystickState[i]);
   }
 
-  delay(10);
+  delay(2);
 }
 
 void readJoystickState(uint16_t joystickState[4]) {
@@ -44,6 +50,19 @@ void readJoystickState(uint16_t joystickState[4]) {
   joystickState[2] = analogRead(pin_JoystickRX);
   joystickState[3] = analogRead(pin_JoystickRY);
 }
+
+
+void smooth(uint16_t joystickState[4], float joystickAvg[4], int n) {
+
+  for (int i = 0; i < 4; i++){
+    float val = ((float) joystickState[i] + (n - 1) * joystickAvg[i]) / n;
+
+    joystickAvg[i] = val;
+    joystickState[i] = (uint16_t) val;
+  }
+
+}
+
 
 uint16_t readButtonState() {
   uint16_t buttonState = 0;
